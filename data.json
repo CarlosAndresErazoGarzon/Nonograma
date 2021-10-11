@@ -1,0 +1,16 @@
+[{
+    "tamanio": 5,
+    "dificultad": "facil",
+    "parametrosX": [[5],[4],[2,1],[1],[2,2]],
+    "parametrosY": [[1,1],[3,1],[3],[2,1],[5]]
+},{
+    "tamanio": 5,
+    "dificultad": "intermedio",
+    "parametrosX": [[1],[1,3],[1,2],[1,2],[2]],
+    "parametrosY": [[3],[1],[2,2],[3],[2]]
+},{
+    "tamanio": 7,
+    "dificultad": "dificil",
+    "parametrosX": [[1,1,2],[7],[1,3],[1,1,1],[4],[7],[2,1,1]],
+    "parametrosY": [[4,2],[1,3],[1,2],[2,3],[2,3],[4,1],[3,2]]
+}]
