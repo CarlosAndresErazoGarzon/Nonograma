@@ -2,6 +2,7 @@ import json
 from interface import *
 import pprint
 import random
+import sys
 
 boards = []
 mainBoard = -1
@@ -22,7 +23,7 @@ def __init__():
     menu()
 
 def menu():
-
+    
     while True:
         print("\nMENU PRINCIPAL: \n")
         print("1. Escoger tablero")
@@ -30,7 +31,8 @@ def menu():
         print("3. Puntuaciones")
         print("4. Salir")
 
-        opt = int(input("\nSeleccione una opcion: "))
+        #opt = int(input("\nSeleccione una opcion: "))
+        opt = 1
 
         if opt == 1:
             boardsMenu()
@@ -55,7 +57,9 @@ def boardsMenu():
         print("Tablero: ",i+1, "Tamanio: ", boards[i]['tamanio'], "Dificultad: ", boards[i]['dificultad'])
     
     while True:
-        opc = int(input("Seleccione un tablero: "))
+        #opc = int(input("Seleccione un tablero: "))
+        #print(sys.argv)
+        opc = 1
 
         if opc > 1 or opc < len(boards):
             mainBoard = opc
@@ -77,7 +81,8 @@ def fillCell(board):
     opc = ""
 
     while True:
-        opc = input("Desea agregar una X(X), llenar una celda (F), limpiar una celda (D): ")
+        #opc = input("Desea agregar una X(X), llenar una celda (F), limpiar una celda (D): ")
+        opc = "F"
 
         if opc != "X" and opc != "F" and opc != "D":
             print("Ingrese la opcion nuevamente")
@@ -113,20 +118,29 @@ def fillCell(board):
         gameBoard[row][col] = "   "
 
     isValid = checkBoard(board, gameBoard, tam, col, row)
-    print("Cent: ", isValid)
 
     if not isValid:
         isOver = False
         gameBoard[row][col] = "   "
         print("No Se pudo hacer el movimiento")
         intentos = intentos + 1
-        print("INTENTOS", intentos)
         if intentos == 10:
-            print("CONDICIONAL INTENTOS")
             isOver = validarSolucionesRestantes(board, gameBoard, tam)
 
             if isOver:
                 print("Fin del juego")
+                
+                gana = validateGameboard(board, tam)
+
+                if(gana):
+                    print("Gana")
+                else:
+                    print("Pierde")
+
+                with open("data.txt", "a") as text_file:
+                    text_file.write(str(gana) + "\n")
+
+                exit()
             else:
                 intentos = 0
 
@@ -137,9 +151,23 @@ def fillCell(board):
     game(board)
 
 def game(board):
-    global gameBoard
+    global gameBoard, mainBoard
 
-    opc = input("Desea continuar con el juego? S/N ")
+    tam = boards[mainBoard-1]['tamanio']
+
+    baseListY, baseListX = findBaseElements(board, gameBoard, tam)
+
+    for i in range(len(baseListX)):
+        fillBaseGameBoard(baseListX[i], "row", board['parametrosY'][baseListX[i]], tam)
+
+    for i in range(len(baseListY)):
+        fillBaseGameBoard(baseListY[i], "col", board['parametrosX'][baseListY[i]], tam)
+
+    print("\nCargando solución base...\n")
+    
+    printBoard(board['parametrosX'], board['parametrosY'], tam, gameBoard)
+    #opc = input("Desea continuar con el juego? S/N ")
+    opc = "S"
     if opc == "S":
         fillCell(board)
     else:
@@ -149,8 +177,6 @@ def game(board):
         menu()
 
 def checkBoard(board, gameBoard, tam, col, row):
-    pprint.pprint(gameBoard)
-
     parY = board['parametrosX'][col]
     parX = board['parametrosY'][row]
 
@@ -170,7 +196,6 @@ def checkBoard(board, gameBoard, tam, col, row):
             contarY = True
 
         if(gameBoard[i][col] == "   " and contarY == True):
-            print(contadorY)
             listY.append(contadorY)
             contadorY = 0
             contarY = False
@@ -200,13 +225,6 @@ def checkBoard(board, gameBoard, tam, col, row):
         for i in range(faltantesY):
             listY.append(0)
 
-
-    print("ListaY: ", listY)
-    print("ListaX: ", listX)
-    print("ParX:", parX)
-    print("ParY:", parY)
-
-
     for i in range(len(parY)):
         if listY[i] > parY[i]:
             validacionY.append(False)
@@ -218,11 +236,6 @@ def checkBoard(board, gameBoard, tam, col, row):
             validacionX.append(False)
         else:
             validacionX.append(True)
-
-
-    
-    print("validacionX", validacionX)
-    print("validacionY", validacionY)
 
     isValid = True
     
@@ -241,13 +254,98 @@ def validarSolucionesRestantes(board, gameBoard, tam):
                 gameBoard[i][j] = "███"
                 isValid.append(checkBoard(board, gameBoard, tam, j, i))
                 gameBoard[i][j] = "   "
-                print("i: ", i, " j: ", j, "isValid: ", isValid)
 
     if True in isValid:
         isOver = False;            
     
     return isOver
 
+def findBaseElements(board, gameBoard, tam):
+    parY = board['parametrosX']
+    parX = board['parametrosY']
+
+    baseY = []
+    baseX = []
+
+    for i in range(tam):
+        sumY = 0
+        sumX = 0
+        for j in range(len(parY[i])):
+            sumY += parY[i][j]
+            if len(parY[i])-1 > j:
+                sumY += 1
+
+        for j in range(len(parX[i])):
+            sumX += parX[i][j]
+            if len(parX[i])-1 > j:
+                sumX += 1
+
+        if(sumY == tam):
+            baseY.append(i)
+
+        if(sumX == tam):
+            baseX.append(i)
+
+    return baseY, baseX
+
+def fillBaseGameBoard(num, direction, param, tam):
+    global gameBoard
+
+    if(direction == "col"):
+        k = 0
+        contador = param[k]
+        for i in range(tam):
+            if(contador != 0):
+                gameBoard[i][num] = "███"
+                contador -= 1
+            else:
+                k += 1
+                contador = param[k]
+
+    if(direction == "row"):
+        k = 0
+        contador = param[k]
+        for i in range(tam):
+                if(contador != 0):
+                    gameBoard[num][i] = "███"
+                    contador -= 1
+                else:
+                    k += 1
+                    contador = param[k]
+
+def validateGameboard(board, tam):
+    global gameBoard
+
+    parY = board['parametrosX']
+    parX = board['parametrosY']
+
+    whiteRows = []
+
+
+    cent = True
+
+
+    for i in range(tam):
+        totalSupuestoX = sum(parX[i])
+        totalRealX = gameBoard[i].count("███")
+
+        totalSupuestoY = sum(parY[i])
+        col = column(gameBoard, i)
+        totalRealY = col.count("███")
+
+        if(totalRealX != totalSupuestoX or totalRealY != totalSupuestoY):
+            cent = False
+
+    return cent
+
+
+def column(matrix, i):
+    return [row[i] for row in matrix]
+            
+
+
+    
+            
 
     
 
