@@ -1,11 +1,12 @@
-import main
-import os
-import subprocess
 import sys
+import mTest
 
+with open("data"+str(sys.argv[1])+".txt", "w") as file:
+   file.write("")
 
-for i in range(99):
-    exec(open('.\main.py').read())
+#Cambiar linea 64 de mTest
+for i in range(100):
+    exec(open('.\mTest.py').read())
 
 with open("data"+str(sys.argv[1])+".txt") as f:
     lines = f.readlines()

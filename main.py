@@ -8,7 +8,6 @@ boards = []
 mainBoard = -1
 gameBoard = [[]]
 intentos = 0
-gameOver = False
 
 def loadData(filename):
     with open(filename) as jsonFile:
@@ -19,170 +18,93 @@ def loadData(filename):
 def __init__():
     global boards
     boards = loadData("data.json")
-    #print("Datos cargados!")
-    #print("Buena suerte!")
-    menu()
-
-def menu():
-    global gameOver
-    
-    while not gameOver:
-        #print("\nMENU PRINCIPAL: \n")
-        #print("1. Escoger tablero")
-        #print("2. Reglas del juego")
-        #print("3. Puntuaciones")
-        #print("4. Salir")
-
-        #opt = int(input("\nSeleccione una opcion: "))
-        opt = 1
-
-        if opt == 1:
-            boardsMenu()
-        #end if
-        if opt == 2:
-            rules()
-        #end if
-        if opt == 3:
-            topTimes()
-        #end if
-        if opt == 4:
-            endGame()
-            break
-        #end if
-#end def
+    print("Datos cargados!")
+    print("Buena suerte!")
+    boardsMenu()
 
 def boardsMenu():
     global boards, mainBoard, gameBoard
-    #print("\nBOARDS MENU: \n")
-    """
+    print("\nBOARDS MENU: \n")
+
     for i in range(len(boards)):
         print("Tablero: ",i+1, "Tamanio: ", boards[i]['tamanio'], "Dificultad: ", boards[i]['dificultad'])
-    """
+    
     while True:
-        #opc = int(input("Seleccione un tablero: "))
-        #print(sys.argv)
-        opc = 7
+        opc = int(input("Seleccione un tablero: "))
 
         if opc > 1 or opc < len(boards):
             mainBoard = opc
             break
-        """
         else:
             print("Opcion no valida, intente de nuevo")
-        """
     
     tam = boards[opc-1]['tamanio']
     gameBoard = [[" "*3 for i in range(tam)]for j in range(tam)]
-    #printBoard(boards[opc-1]['parametrosX'], boards[opc-1]['parametrosY'], tam, gameBoard)
-
+    printBoard(boards[opc-1]['parametrosX'], boards[opc-1]['parametrosY'], tam, gameBoard)
+    initBase(boards[opc-1])
     game(boards[opc-1])
 
+def initBase(board):
+    global gameBoard, mainBoard
 
+    tam = boards[mainBoard-1]['tamanio']
+    baseListY, baseListX = findBaseElements(board, gameBoard, tam)
+
+    for i in range(len(baseListX)):
+        fillBaseGameBoard(baseListX[i], "row", board['parametrosY'][baseListX[i]], tam)
+
+    for i in range(len(baseListY)):
+        fillBaseGameBoard(baseListY[i], "col", board['parametrosX'][baseListY[i]], tam)
+
+    print("\nCargando solución base...\n")
+
+def game(board):
+    global gameBoard, mainBoard
+    while True:
+        tam = boards[mainBoard-1]['tamanio']
+        printBoard(board['parametrosX'], board['parametrosY'], tam, gameBoard)
+        fillCell(board)
 
 def fillCell(board):
-    global gameBoard, intentos, gameOver, mainBoard
+    global gameBoard, intentos
     tam = int(board['tamanio'])
-    opc = ""
-
-    while True:
-        #opc = input("Desea agregar una X(X), llenar una celda (F), limpiar una celda (D): ")
-        opc = "F"
-
-        if opc != "X" and opc != "F" and opc != "D":
-            #print("Ingrese la opcion nuevamente")
-            continue
-        else:
-            break
 
     cent = True
 
     while cent:
         cent = False
-        #col = int(input("Ingrese el numero de la columna: "))
-        #row = int(input("Ingrese el numero de la fila: "))
         col = random.randint(0, tam -1)
         row = random.randint(0, tam -1)
 
-        if col < 0 or col > tam:
-            #print("Se ingresaron mal las columnas")
-            cent = True
-        if row < 0 or row > tam:
-            #print("Se ingresaron mal las filas")
-            cent = True
-
         if gameBoard[row][col] == "███":
-            #print("La posición se encuentra ocupada")
             cent = True
         
 
-    if opc == "X":
-        gameBoard[row][col] = " X "
-    elif opc == "F":
-        gameBoard[row][col] = "███"
-    else:
-        gameBoard[row][col] = "   "
-
+    gameBoard[row][col] = "███"
     isValid = checkBoard(board, gameBoard, tam, col, row)
 
     if not isValid:
         isOver = False
         gameBoard[row][col] = "   "
-        #print("No Se pudo hacer el movimiento")
         intentos = intentos + 1
         if intentos == 10:
             isOver = validarSolucionesRestantes(board, gameBoard, tam)
 
-            if isOver:
-                #print("Fin del juego")
-                
+            if isOver: 
                 gana = validateGameboard(board, tam)
-                """
+
                 if(gana):
                     print("Gana")
                 else:
                     print("Pierde")
-                """
 
-                with open("data"+str(mainBoard)+".txt", "a") as text_file:
+                with open("data.txt", "a") as text_file:
                     text_file.write(str(gana) + "\n")
 
-                gameOver = True
+                endGame()
             else:
                 intentos = 0
 
-    
-    #printBoard(board['parametrosX'], board['parametrosY'], tam, gameBoard)
-    
-    
-    game(board)
-
-def game(board):
-    global gameBoard, mainBoard, gameOver
-
-
-    if not gameOver:
-        tam = boards[mainBoard-1]['tamanio']
-
-        baseListY, baseListX = findBaseElements(board, gameBoard, tam)
-
-        for i in range(len(baseListX)):
-            fillBaseGameBoard(baseListX[i], "row", board['parametrosY'][baseListX[i]], tam)
-
-        for i in range(len(baseListY)):
-            fillBaseGameBoard(baseListY[i], "col", board['parametrosX'][baseListY[i]], tam)
-
-        #print("\nCargando solución base...\n")
-        
-        #printBoard(board['parametrosX'], board['parametrosY'], tam, gameBoard)
-        #opc = input("Desea continuar con el juego? S/N ")
-
-        opc = "S"
-        fillCell(board)
-    else:
-        #print("Su tiempo fue de: ")
-        tam = board['tamanio']
-        gameBoard = [[" "*3 for i in range(tam)]for j in range(tam)]
-        menu()
 
 def checkBoard(board, gameBoard, tam, col, row):
     parY = board['parametrosX'][col]
@@ -349,7 +271,7 @@ def validateGameboard(board, tam):
 
 def column(matrix, i):
     return [row[i] for row in matrix]
-    
+            
 
 def rules():
     print("\nREGLAS: \n")
@@ -370,9 +292,6 @@ def rules():
     print("= 4. Para terminar con la ejecucion del juego basta con seleccionar la   =")
     print("=   de salir en el menu principal.                                       =")
     print("==========================================================================")
-
-def topTimes():
-    print("en construccion")
 
 def endGame():
     print("Gracias por jugar!")
